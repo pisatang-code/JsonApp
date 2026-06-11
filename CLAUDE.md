@@ -138,6 +138,52 @@ CRUD/
 
 단계별 구현 목표는 [`docs/PLAN.md`](docs/PLAN.md)에 Phase별로 정리되어 있다.
 
+## 알려진 빌드 주의사항
+
+코드 작성 전 아래 규칙을 확인한다.
+
+| 상황 | 잘못된 방법 | 올바른 방법 |
+|------|------------|------------|
+| `windows.h` 포함 시 | `#include <windows.h>` 단독 사용 | `#define NOMINMAX` 먼저 선언 후 포함 |
+
+### `NOMINMAX` — windows.h + std::numeric_limits 충돌
+
+`windows.h`는 `min` / `max`를 전역 매크로로 정의한다.
+이 매크로가 `std::numeric_limits<T>::max()` 호출을 오염시켜 **빌드 오류**가 발생한다.
+
+```cpp
+// 항상 이 순서로 작성
+#define NOMINMAX
+#include <windows.h>
+```
+
+---
+
+## 인코딩 규칙
+
+한글 깨짐 방지를 위해 아래 규칙을 반드시 준수한다.
+
+| 항목 | 설정 |
+|------|------|
+| 소스 파일 인코딩 | **UTF-8** (BOM 없음) |
+| 컴파일러 플래그 | `/utf-8` — MSVC가 소스를 UTF-8로 해석하고 내부 문자열도 UTF-8로 인코딩 |
+| 런타임 콘솔 설정 | `SetConsoleOutputCP(CP_UTF8)` + `SetConsoleCP(CP_UTF8)` — `main()` 진입 직후 호출 |
+
+**한글 문자열을 사용하는 모든 `.cpp` / `.h` 파일은 UTF-8로 저장한다.**
+
+```cpp
+// main.cpp — 항상 main() 첫 줄에 포함
+#define NOMINMAX    // windows.h의 min/max 매크로가 std::numeric_limits와 충돌하는 것을 방지
+#include <windows.h>
+// ...
+int main()
+{
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    // ...
+}
+```
+
 ## 빌드 환경
 
 - Visual Studio 2022 (또는 호환 버전)
