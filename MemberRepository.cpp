@@ -64,3 +64,43 @@ std::vector<Member> MemberRepository::findAll() const
 {
     return m_members;
 }
+
+std::optional<Member> MemberRepository::findById(int id) const
+{
+    for (const auto& m : m_members)
+        if (m.id == id) return m;
+    return std::nullopt;
+}
+
+bool MemberRepository::update(int id,
+                               const std::string& name,
+                               const std::string& email,
+                               const std::string& phone)
+{
+    for (auto& m : m_members)
+    {
+        if (m.id == id)
+        {
+            m.name  = name;
+            m.email = email;
+            m.phone = phone;
+            save();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool MemberRepository::remove(int id)
+{
+    for (auto it = m_members.begin(); it != m_members.end(); ++it)
+    {
+        if (it->id == id)
+        {
+            m_members.erase(it);
+            save();
+            return true;
+        }
+    }
+    return false;
+}

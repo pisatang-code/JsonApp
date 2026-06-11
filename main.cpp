@@ -29,6 +29,16 @@ static std::string padRight(const std::string& s, int width)
     return s + std::string(pad > 0 ? pad : 0, ' ');
 }
 
+static void printMember(const Member& m)
+{
+    std::cout << "  ID      : " << m.id << "\n";
+    std::cout << "  이름    : " << m.name << "\n";
+    std::cout << "  이메일  : " << m.email << "\n";
+    std::cout << "  전화번호: " << m.phone << "\n";
+    std::cout << "  상태    : " << (m.active ? "활성" : "비활성") << "\n";
+    std::cout << "  등록일  : " << m.createdAt << "\n";
+}
+
 static void printMenu()
 {
     std::cout << "\n==========================================\n";
@@ -114,6 +124,86 @@ static void handleRead(MemberRepository& repo)
     line();
 }
 
+static void handleUpdate(MemberRepository& repo)
+{
+    std::cout << "\n=== 회원 수정 ===\n";
+    std::cout << "  수정할 회원 ID: ";
+
+    int id;
+    if (!(std::cin >> id))
+    {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "\n  [오류] 숫자를 입력해 주세요.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    auto member = repo.findById(id);
+    if (!member)
+    {
+        std::cout << "\n  [오류] ID " << id << "인 회원을 찾을 수 없습니다.\n";
+        return;
+    }
+
+    std::cout << "\n  현재 정보:\n";
+    printMember(*member);
+
+    std::cout << "\n  새 값 입력 (변경하지 않을 항목은 Enter):\n";
+
+    std::string name, email, phone;
+    std::cout << "  이름     [" << member->name  << "] : "; std::getline(std::cin, name);
+    std::cout << "  이메일   [" << member->email << "] : "; std::getline(std::cin, email);
+    std::cout << "  전화번호 [" << member->phone << "] : "; std::getline(std::cin, phone);
+
+    if (name.empty())  name  = member->name;
+    if (email.empty()) email = member->email;
+    if (phone.empty()) phone = member->phone;
+
+    repo.update(id, name, email, phone);
+    std::cout << "\n  수정 완료\n";
+}
+
+static void handleDelete(MemberRepository& repo)
+{
+    std::cout << "\n=== 회원 삭제 ===\n";
+    std::cout << "  삭제할 회원 ID: ";
+
+    int id;
+    if (!(std::cin >> id))
+    {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "\n  [오류] 숫자를 입력해 주세요.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    auto member = repo.findById(id);
+    if (!member)
+    {
+        std::cout << "\n  [오류] ID " << id << "인 회원을 찾을 수 없습니다.\n";
+        return;
+    }
+
+    std::cout << "\n  삭제 대상:\n";
+    printMember(*member);
+
+    std::cout << "\n  정말 삭제하시겠습니까? (Y/N): ";
+    std::string answer;
+    std::getline(std::cin, answer);
+
+    if (answer == "Y" || answer == "y")
+    {
+        repo.remove(id);
+        std::cout << "\n  삭제 완료\n";
+    }
+    else
+    {
+        std::cout << "\n  삭제를 취소했습니다.\n";
+    }
+}
+
 int main()
 {
     SetConsoleOutputCP(CP_UTF8);
@@ -140,8 +230,8 @@ int main()
         {
         case 1: handleCreate(repo); break;
         case 2: handleRead(repo);   break;
-        case 3: std::cout << "\n  [회원 수정] 준비 중입니다.\n"; break;
-        case 4: std::cout << "\n  [회원 삭제] 준비 중입니다.\n"; break;
+        case 3: handleUpdate(repo); break;
+        case 4: handleDelete(repo); break;
         case 0:
             std::cout << "\n  프로그램을 종료합니다.\n\n";
             return 0;
