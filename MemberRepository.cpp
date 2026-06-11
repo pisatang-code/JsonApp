@@ -1,0 +1,66 @@
+#include "MemberRepository.h"
+#include <ctime>
+
+static std::string currentDate()
+{
+    std::time_t t = std::time(nullptr);
+    std::tm tm{};
+    localtime_s(&tm, &t);
+    char buf[11];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d", &tm);
+    return buf;
+}
+
+MemberRepository::MemberRepository(const std::string& filePath)
+    : m_filePath(filePath)
+{
+    load();
+}
+
+void MemberRepository::load()
+{
+    try
+    {
+        JsonValue root = JsonParser::parseFile(m_filePath);
+        for (const auto& item : root.asArray())
+            m_members.push_back(memberFromJson(item));
+    }
+    catch (...) {}  // 파일 없음 또는 빈 배열 → 무시하고 빈 상태로 시작
+}
+
+void MemberRepository::save() const
+{
+    JsonValue root;
+    for (const auto& m : m_members)
+        root.push(memberToJson(m));
+    JsonWriter::saveFile(root, m_filePath);
+}
+
+int MemberRepository::nextId() const
+{
+    int maxId = 0;
+    for (const auto& m : m_members)
+        if (m.id > maxId) maxId = m.id;
+    return maxId + 1;
+}
+
+Member MemberRepository::create(const std::string& name,
+                                 const std::string& email,
+                                 const std::string& phone)
+{
+    Member m;
+    m.id        = nextId();
+    m.name      = name;
+    m.email     = email;
+    m.phone     = phone;
+    m.active    = true;
+    m.createdAt = currentDate();
+    m_members.push_back(m);
+    save();
+    return m;
+}
+
+std::vector<Member> MemberRepository::findAll() const
+{
+    return m_members;
+}

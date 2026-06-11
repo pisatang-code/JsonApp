@@ -134,6 +134,11 @@ CRUD/
 └── CRUD.vcxproj       # Visual Studio 프로젝트 파일
 ```
 
+## Git 운영 규칙
+
+- commit / push는 **명시적 요청이 있을 때만** 수행한다.
+- 단, **"Phase N 문제없음 확인"** 메시지를 받으면 해당 Phase 작업을 즉시 commit & push한다.
+
 ## 개발 계획
 
 단계별 구현 목표는 [`docs/PLAN.md`](docs/PLAN.md)에 Phase별로 정리되어 있다.
