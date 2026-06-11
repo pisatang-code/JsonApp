@@ -1,5 +1,7 @@
 #include "MemberRepository.h"
 #include <ctime>
+#include <algorithm>
+#include <cctype>
 
 static std::string currentDate()
 {
@@ -102,5 +104,34 @@ bool MemberRepository::remove(int id)
             return true;
         }
     }
+    return false;
+}
+
+std::vector<Member> MemberRepository::findByKeyword(const std::string& field,
+                                                     const std::string& keyword) const
+{
+    auto toLower = [](std::string s) {
+        std::transform(s.begin(), s.end(), s.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        return s;
+    };
+
+    std::string kw = toLower(keyword);
+    std::vector<Member> result;
+
+    for (const auto& m : m_members)
+    {
+        std::string val = (field == "name") ? m.name : m.email;
+        if (toLower(val).find(kw) != std::string::npos)
+            result.push_back(m);
+    }
+    return result;
+}
+
+bool MemberRepository::existsEmail(const std::string& email, int excludeId) const
+{
+    for (const auto& m : m_members)
+        if (m.id != excludeId && m.email == email)
+            return true;
     return false;
 }

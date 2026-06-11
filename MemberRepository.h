@@ -19,6 +19,10 @@ public:
                                  const std::string& email,
                                  const std::string& phone);
     bool                  remove(int id);
+    std::vector<Member>   findByKeyword(const std::string& field,
+                                        const std::string& keyword) const;
+    bool                  existsEmail(const std::string& email,
+                                      int excludeId = -1) const;
 
 private:
     std::string         m_filePath;

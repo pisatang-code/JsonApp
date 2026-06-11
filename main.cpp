@@ -69,25 +69,26 @@ static void handleCreate(MemberRepository& repo)
         return;
     }
 
+    if (repo.existsEmail(email))
+    {
+        std::cout << "\n  [오류] 이미 등록된 이메일입니다.\n";
+        return;
+    }
+
     Member m = repo.create(name, email, phone);
     std::cout << "\n  등록 완료 — ID: " << m.id << " / " << m.name << "\n";
 }
 
-static void handleRead(MemberRepository& repo)
+static void printMemberTable(const std::vector<Member>& members)
 {
-    std::cout << "\n=== 회원 목록 ===\n";
-
-    auto members = repo.findAll();
-
     if (members.empty())
     {
-        std::cout << "  등록된 회원이 없습니다.\n";
+        std::cout << "  검색 결과가 없습니다.\n";
         return;
     }
 
-    std::cout << "  총 " << members.size() << "명이 등록되어 있습니다.\n\n";
+    std::cout << "  총 " << members.size() << "명\n\n";
 
-    // 컬럼 너비 (display 기준)
     const int W_ID    =  4;
     const int W_NAME  = 12;
     const int W_EMAIL = 26;
@@ -102,7 +103,6 @@ static void handleRead(MemberRepository& repo)
                   << "+" << std::string(W_STATE + 2, '-')
                   << "+" << std::string(12, '-') << "+\n";
     };
-
     auto row = [&](const std::string& id,    const std::string& name,
                    const std::string& email, const std::string& phone,
                    const std::string& state, const std::string& date)
@@ -122,6 +122,75 @@ static void handleRead(MemberRepository& repo)
         row(std::to_string(m.id), m.name, m.email, m.phone,
             m.active ? "활성" : "비활성", m.createdAt);
     line();
+}
+
+static void handleRead(MemberRepository& repo)
+{
+    std::cout << "\n=== 회원 조회 ===\n";
+    std::cout << "  1. 전체 목록\n";
+    std::cout << "  2. ID로 검색\n";
+    std::cout << "  3. 이름으로 검색\n";
+    std::cout << "  4. 이메일로 검색\n";
+    std::cout << "  0. 돌아가기\n";
+    std::cout << "조회 방법 > ";
+
+    int choice;
+    if (!(std::cin >> choice))
+    {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "\n  [오류] 숫자를 입력해 주세요.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    std::cout << "\n";
+
+    switch (choice)
+    {
+    case 1:
+        printMemberTable(repo.findAll());
+        break;
+    case 2:
+    {
+        std::cout << "  검색할 ID: ";
+        int id;
+        if (!(std::cin >> id))
+        {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "\n  [오류] 숫자를 입력해 주세요.\n";
+            return;
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        auto m = repo.findById(id);
+        if (!m) std::cout << "\n  [오류] ID " << id << "인 회원을 찾을 수 없습니다.\n";
+        else  { std::cout << "\n"; printMember(*m); }
+        break;
+    }
+    case 3:
+    {
+        std::cout << "  이름 검색어: ";
+        std::string kw; std::getline(std::cin, kw);
+        if (kw.empty()) { std::cout << "  [오류] 검색어를 입력해 주세요.\n"; return; }
+        printMemberTable(repo.findByKeyword("name", kw));
+        break;
+    }
+    case 4:
+    {
+        std::cout << "  이메일 검색어: ";
+        std::string kw; std::getline(std::cin, kw);
+        if (kw.empty()) { std::cout << "  [오류] 검색어를 입력해 주세요.\n"; return; }
+        printMemberTable(repo.findByKeyword("email", kw));
+        break;
+    }
+    case 0:
+        break;
+    default:
+        std::cout << "  [오류] 0~4 사이의 번호를 입력해 주세요.\n";
+        break;
+    }
 }
 
 static void handleUpdate(MemberRepository& repo)
@@ -159,6 +228,12 @@ static void handleUpdate(MemberRepository& repo)
     if (name.empty())  name  = member->name;
     if (email.empty()) email = member->email;
     if (phone.empty()) phone = member->phone;
+
+    if (repo.existsEmail(email, id))
+    {
+        std::cout << "\n  [오류] 이미 다른 회원이 사용 중인 이메일입니다.\n";
+        return;
+    }
 
     repo.update(id, name, email, phone);
     std::cout << "\n  수정 완료\n";
